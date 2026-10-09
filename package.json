@@ -1,0 +1,17 @@
+{
+  "name": "video-cutter",
+  "version": "1.0.0",
+  "private": true,
+  "description": "基于 FFmpeg 的 Web 端视频切割应用（React + Express + BullMQ）",
+  "type": "module",
+  "scripts": {
+    "start": "node tools/launcher.mjs dev",
+    "dev": "node tools/launcher.mjs dev",
+    "test": "node tools/launcher.mjs test",
+    "doctor": "node tools/launcher.mjs doctor",
+    "build": "node tools/launcher.mjs build"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

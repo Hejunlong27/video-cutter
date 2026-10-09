@@ -1,0 +1,66 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: vc-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build:
+      context: ./server
+    container_name: vc-server
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      HOST: 0.0.0.0
+      CORS_ORIGIN: '*'
+
+      STORAGE_ROOT: /data
+      DATABASE_URL: 'file:/data/app.db'
+      REDIS_URL: redis://redis:6379
+
+      FFMPEG_PATH: ffmpeg
+      FFPROBE_PATH: ffprobe
+      FFMPEG_TIMEOUT_MINUTES: 60
+
+      MAX_UPLOAD_MB: 2048
+      DEFAULT_SEGMENT_TIME: 10
+      MAX_CONCURRENCY: 2
+      RETENTION_HOURS: 24
+      CLEANUP_INTERVAL_MINUTES: 30
+      ALLOWED_EXTENSIONS: mp4,mov,mkv,avi,webm,m4v,flv,ts,mpeg,mpg,wmv
+    volumes:
+      # 上传文件 / 片段 / SQLite 全部落在这里，删容器不丢数据
+      - ./data:/data
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'node -e "fetch(\"http://127.0.0.1:4000/api/health\").then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"'
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  web:
+    build:
+      context: ./web
+    container_name: vc-web
+    restart: unless-stopped
+    ports:
+      - '8080:80'
+    depends_on:
+      - server
+
+volumes:
+  redis-data:

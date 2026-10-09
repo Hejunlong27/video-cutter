@@ -1,0 +1,12 @@
+node_modules/
+dist/
+data/
+storage/
+.tmp-test/
+*.log
+*.tsbuildinfo
+.env
+.env.local
+server/prisma/*.db
+server/prisma/*.db-journal
+.DS_Store

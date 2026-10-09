@@ -1,0 +1,54 @@
+// Prisma schema —— SQLite 存任务与上传文件元数据
+// 说明：size 用 Float 而非 Int，因为 SQLite 的 INTEGER 上限 2^31-1 装不下 2GB(2147483648)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Upload {
+  id           String   @id
+  originalName String
+  storedName   String   @unique
+  ext          String
+  mimeType     String
+  size         Float
+  duration     Float?
+  createdAt    DateTime @default(now())
+
+  tasks        Task[]
+
+  @@index([createdAt])
+}
+
+model Task {
+  id               String    @id
+  uploadId         String
+  upload           Upload    @relation(fields: [uploadId], references: [id], onDelete: Cascade)
+
+  segmentTime      Int       @default(10)
+  mode             String    @default("fast")   // fast | precise
+  outputFormat     String    @default("mp4")
+
+  status           String    @default("queued") // pending|uploading|queued|processing|completed|failed|cancelled
+  progress         Float     @default(0)
+  processedSeconds Float     @default(0)
+  totalSeconds     Float?
+  segmentCount     Int       @default(0)
+  message          String?
+  error            String?
+
+  outputDir        String
+  zipPath          String?
+
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  startedAt        DateTime?
+  finishedAt       DateTime?
+
+  @@index([status])
+  @@index([createdAt])
+}
